@@ -1,0 +1,31 @@
+[gd_scene load_steps=5 format=3 uid="uid://c2pyy286cpyb2"]
+
+[ext_resource type="PackedScene" uid="uid://cppdolcq5mbf6" path="res://models/soccer_stadium_11_scale_ii.glb" id="1_0xm2m"]
+[ext_resource type="PackedScene" path="res://addons/proto_controller.tscn" id="2_h2yge"]
+[ext_resource type="Script" uid="uid://337mcjjlt5yf" path="res://addons/proto_controller.gd" id="3_h2yge"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_h2yge"]
+
+[node name="Main" type="Node3D"]
+
+[node name="ProtoController" parent="." instance=ExtResource("2_h2yge")]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0)
+script = ExtResource("3_h2yge")
+can_sprint = true
+can_freefly = true
+input_left = "move_left"
+input_right = "move_right"
+input_forward = "move_forward"
+input_back = "move_back"
+input_jump = "jump"
+input_freefly = "free_fly"
+
+[node name="Sketchfab_Scene" parent="." instance=ExtResource("1_0xm2m")]
+transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, -1, 0)
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+transform = Transform3D(200, 0, 0, 0, 1, 0, 0, 0, 200, 0, -1, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
+shape = SubResource("BoxShape3D_h2yge")

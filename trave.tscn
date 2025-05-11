@@ -1,0 +1,72 @@
+[gd_scene load_steps=9 format=3 uid="uid://d3yhtioigw1wl"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_753xs"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_qtixu"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_iyjwv"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_0fm66"]
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_s8u30"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_x73m7"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_eb8ln"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_gwtbt"]
+
+[node name="Trave" type="Node3D"]
+
+[node name="Moldura" type="Node3D" parent="."]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Moldura"]
+transform = Transform3D(0.1341, 0, 0, 0, 2.20559, 0, 0, 0, 0.1341, 0, 1.13975, 0)
+mesh = SubResource("BoxMesh_753xs")
+skeleton = NodePath("../..")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="Moldura"]
+transform = Transform3D(0.1341, 0, 0, 0, 2.20559, 0, 0, 0, 0.1341, 5.48655, 1.13975, 0)
+mesh = SubResource("BoxMesh_qtixu")
+skeleton = NodePath("../..")
+
+[node name="MeshInstance3D3" type="MeshInstance3D" parent="Moldura"]
+transform = Transform3D(-5.86169e-09, -2.71695, 0, 0.1341, -1.18762e-07, 0, 0, 0, 0.1341, 4.06865, 2.17499, 0)
+mesh = SubResource("BoxMesh_iyjwv")
+skeleton = NodePath("../..")
+
+[node name="MeshInstance3D4" type="MeshInstance3D" parent="Moldura"]
+transform = Transform3D(-5.86169e-09, -2.66716, 0, 0.1341, -1.16585e-07, 0, 0, 0, 0.1341, 1.39546, 2.17499, 0)
+mesh = SubResource("BoxMesh_0fm66")
+skeleton = NodePath("../..")
+
+[node name="MeshInstance3D5" type="MeshInstance3D" parent="Moldura"]
+transform = Transform3D(-5.87436e-09, -2.67292, 0, 0.13439, -1.16837e-07, 0, 0, 0, 0.13439, 1.39546, 2.17499, 0)
+mesh = SubResource("BoxMesh_0fm66")
+skeleton = NodePath("../..")
+
+[node name="Rede" type="AnimatableBody3D" parent="."]
+physics_material_override = SubResource("PhysicsMaterial_s8u30")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Rede"]
+transform = Transform3D(-0.00457267, 0, 0, 0, 2.06278, 0, 0, 0, 1, 5.43778, 1.14725, -0.45695)
+mesh = SubResource("BoxMesh_x73m7")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="Rede"]
+transform = Transform3D(-0.00457267, 0, 0, 0, 2.06278, 0, 0, 0, 1, 0.0353856, 1.14725, -0.45695)
+mesh = SubResource("BoxMesh_eb8ln")
+
+[node name="MeshInstance3D6" type="MeshInstance3D" parent="Rede"]
+transform = Transform3D(2.66, 0, 0, 0, 0.009, 0, 0, 0, 1, 1.36484, 2.17499, -0.456253)
+mesh = SubResource("BoxMesh_gwtbt")
+skeleton = NodePath("../..")
+
+[node name="MeshInstance3D7" type="MeshInstance3D" parent="Rede"]
+transform = Transform3D(2.82053, 0, 0, 0, 0.0089909, 0, 0, 0, 0.998989, 4.02392, 2.17499, -0.456253)
+mesh = SubResource("BoxMesh_gwtbt")
+skeleton = NodePath("../..")
+
+[node name="MeshInstance3D8" type="MeshInstance3D" parent="Rede"]
+transform = Transform3D(5.414, 0, 0, 0, -2.5919e-05, 1.75539, 0, -0.0157985, -0.00287989, 2.73527, 1.16454, -0.889102)
+mesh = SubResource("BoxMesh_gwtbt")
+skeleton = NodePath("../..")
