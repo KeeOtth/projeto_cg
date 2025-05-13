@@ -1,0 +1,46 @@
+[gd_scene load_steps=8 format=3 uid="uid://bts683nea0mdl"]
+
+[ext_resource type="Script" uid="uid://b4xb635dpyjib" path="res://player.gd" id="1_4flbx"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_sh265"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sh265"]
+albedo_color = Color(0.0328, 0.46576, 0.82, 1)
+disable_receive_shadows = true
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_4flbx"]
+material = SubResource("StandardMaterial3D_sh265")
+height = 0.001
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_onrkg"]
+albedo_color = Color(0.0313726, 0.466667, 0.819608, 1)
+disable_receive_shadows = true
+
+[sub_resource type="PrismMesh" id="PrismMesh_i3pqv"]
+material = SubResource("StandardMaterial3D_onrkg")
+size = Vector3(0.79, 0.36, 0)
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hqtel"]
+
+[node name="Player" type="CharacterBody3D"]
+script = ExtResource("1_4flbx")
+
+[node name="Pivot" type="Node3D" parent="."]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Pivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.997304, 0)
+mesh = SubResource("CapsuleMesh_sh265")
+
+[node name="DirectionalIndicator" type="Node3D" parent="Pivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15468, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Pivot/DirectionalIndicator"]
+mesh = SubResource("CylinderMesh_4flbx")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="Pivot/DirectionalIndicator"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, -0.00108474, -2.38419e-07, -0.49298)
+mesh = SubResource("PrismMesh_i3pqv")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.978447, 0)
+shape = SubResource("CapsuleShape3D_hqtel")

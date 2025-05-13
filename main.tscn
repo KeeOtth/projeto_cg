@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://c2pyy286cpyb2"]
 
 [ext_resource type="PackedScene" uid="uid://cppdolcq5mbf6" path="res://models/soccer_stadium_11_scale_ii.glb" id="1_0xm2m"]
-[ext_resource type="PackedScene" path="res://addons/proto_controller.tscn" id="2_h2yge"]
+[ext_resource type="PackedScene" uid="uid://bs72ogkvdd7d6" path="res://addons/proto_controller.tscn" id="2_h2yge"]
 [ext_resource type="Script" uid="uid://337mcjjlt5yf" path="res://addons/proto_controller.gd" id="3_h2yge"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_h2yge"]
