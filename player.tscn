@@ -22,7 +22,7 @@ size = Vector3(0.79, 0.36, 0)
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hqtel"]
 
-[node name="Player" type="CharacterBody3D"]
+[node name="Player" type="CharacterBody3D" groups=["Players"]]
 script = ExtResource("1_4flbx")
 
 [node name="Pivot" type="Node3D" parent="."]
