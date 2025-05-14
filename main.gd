@@ -10,7 +10,7 @@ func _on_blue_team_gol_body_entered(body: Node3D) -> void:
 
 
 func _on_red_team_gol_body_entered(body: Node3D) -> void:
-	print("Blue fez Gol")
+	print("Blue fez Gol")	
 	pass # Replace with function body.
 
 
