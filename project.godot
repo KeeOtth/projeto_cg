@@ -79,5 +79,7 @@ switch_player={
 
 [layer_names]
 
+3d_physics/layer_5="Lateral"
+3d_physics/layer_6="Backline"
 3d_physics/layer_7="Ball"
 3d_physics/layer_8="Gol"
