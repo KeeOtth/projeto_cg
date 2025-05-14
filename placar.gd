@@ -12,4 +12,4 @@ func contabilizar_gols(time: String):
 		label_time_A.text = "Time A: %d" % gols_A
 	elif time == "B":
 		gols_B += 1
-		label_time_B.text = "TimeB: %d" % gols_B
+		label_time_B.text = "Time B: %d" % gols_B

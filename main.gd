@@ -7,7 +7,7 @@ func _on_blue_team_gol_body_entered(body: Node3D) -> void:
 	if body.is_in_group("Ball"):
 		print("GOOOOOOL")
 		
-		get_node("/root/Main/Placar").contabilizar_gols("A")
+		get_node("/root/Main/Placar").contabilizar_gols("B")
 		
 		body.freeze = true
 		body.get_node("MeshInstance3D").visible = false
@@ -20,7 +20,7 @@ func _on_red_team_gol_body_entered(body: Node3D) -> void:
 	if body.is_in_group("Ball"):
 		print("GOOOOOOL")
 		
-		get_node("/root/Main/Placar").contabilizar_gols("B")
+		get_node("/root/Main/Placar").contabilizar_gols("A")
 		
 		body.freeze = true
 		body.get_node("MeshInstance3D").visible = false
