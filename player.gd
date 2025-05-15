@@ -1,12 +1,34 @@
 extends CharacterBody3D
 
+@export var joystick_id := 0
+@onready var collision = $CollisionShape3D
 @export var base_speed = 8
 @export var speed = base_speed
 @export var fall_acceleration = 75
 @export var is_active = false
+@export var time := "Azul"
+var deadzone = 0.2
+
+var cores_times = {
+	"Azul": Color(0.306, 0.365, 0.796),
+	"Vermelho": Color(0.796, 0.306, 0.314)
+}
 
 var target_velocity = Vector3.ZERO
 @export var held_ball: RigidBody3D = null
+
+func _ready():
+	var cor = cores_times.get(time, Color(1,1,1))
+	aplicar_cor_nos_meshes_do_indicador(cor)
+
+func aplicar_cor_nos_meshes_do_indicador(cor: Color):
+	var indicador = $Pivot/DirectionalIndicator
+	if indicador:
+		for filho in indicador.get_children():
+			if filho is MeshInstance3D:
+				var mat = StandardMaterial3D.new()
+				mat.albedo_color = cor
+				filho.set_surface_override_material(0, mat)
 
 func aplicar_boost_velocidade(duracao: float, multiplicador: float):
 	speed = base_speed * multiplicador
@@ -16,22 +38,31 @@ func aplicar_boost_velocidade(duracao: float, multiplicador: float):
 	print("Boost de velocidade finalizado")
 	
 func _physics_process(delta):
+	target_velocity = Vector3.ZERO
+	if is_active:
+		process_active(delta)
+	process_common(delta)
+
+func process_common(delta):
 	if not is_on_floor():
 		target_velocity.y = target_velocity.y - (fall_acceleration * delta)
 	$Pivot/DirectionalIndicator.visible = is_active
-	if not is_active:
-		return
 	
+	velocity = target_velocity
+	move_and_slide()
+func process_active(delta):
 	var direction = Vector3.ZERO
 
-	if Input.is_action_pressed("move_back"):
+	if Input.is_action_pressed("move_back") or Input.get_joy_axis(joystick_id, JOY_AXIS_LEFT_Y) > deadzone:
 		direction.x += 1
-	if Input.is_action_pressed("move_forward"):
+	if Input.is_action_pressed("move_forward") or Input.get_joy_axis(joystick_id, JOY_AXIS_LEFT_Y) < -deadzone:
 		direction.x -= 1
-	if Input.is_action_pressed("move_right"):
+	if Input.is_action_pressed("move_right") or Input.get_joy_axis(joystick_id, JOY_AXIS_LEFT_X) > deadzone:
 		direction.z -= 1
-	if Input.is_action_pressed("move_left"):
+	if Input.is_action_pressed("move_left") or Input.get_joy_axis(joystick_id, JOY_AXIS_LEFT_X) < -deadzone:
 		direction.z += 1
+
+	
 
 	if direction != Vector3.ZERO:
 		direction = direction.normalized()
@@ -53,7 +84,7 @@ func _physics_process(delta):
 				collider.global_transform.origin += offset
 				collider.apply_impulse(collision.get_normal() * -1 * 0.5, offset)
 				
-	if Input.is_action_just_pressed("hold_ball"):
+	if Input.is_action_just_pressed("hold_ball") or Input.is_joy_button_pressed(joystick_id, JOY_BUTTON_X):
 		if held_ball:
 			held_ball.freeze = false
 			held_ball = null
@@ -77,7 +108,7 @@ func _physics_process(delta):
 						held_ball.freeze = true
 						break
 
-	if Input.is_action_just_pressed("ui_accept") and held_ball:
+	if (Input.is_action_just_pressed("attack") or  Input.is_joy_button_pressed(joystick_id, JOY_BUTTON_A)) and held_ball:
 		held_ball.freeze = false
 		var hold_pos = global_transform.origin + $Pivot.transform.basis.z * -1.6 + Vector3(0, 0.37, 0)
 		held_ball.global_transform.origin = hold_pos
@@ -89,7 +120,3 @@ func _physics_process(delta):
 	if held_ball:
 		var hold_pos = global_transform.origin + $Pivot.transform.basis.z * -1.2 + Vector3(0, 0.37, 0)
 		held_ball.global_transform.origin = hold_pos
-
-	# Moving the Character
-	velocity = target_velocity
-	move_and_slide()

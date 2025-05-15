@@ -3,13 +3,11 @@ extends CanvasLayer
 var gols_A = 0
 var gols_B = 0
 
-@onready var label_time_A = $HBoxContainer/TimeA
-@onready var label_time_B = $HBoxContainer/TimeB
+@onready var label_time = $HBoxContainer/LabelPlacar
 
 func contabilizar_gols(time: String):
 	if time == "A":
 		gols_A += 1
-		label_time_A.text = "Time A: %d" % gols_A
-	elif time == "B":
+	else:
 		gols_B += 1
-		label_time_B.text = "Time B: %d" % gols_B
+	label_time.text = "CSA %d X %d CRB" % [gols_A, gols_B]
