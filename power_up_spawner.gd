@@ -1,39 +1,33 @@
 extends Node3D
 
-@export var powerup_scene: PackedScene
-@export var cooldown_entre_spawns := 1.0
-@export var tempo_powerup_em_campo := 5.0
-@export var area_spawn := AABB(Vector3.ZERO, Vector3(30, 0, 20))  # área no campo
-
+@export var powerup_scenes: Array[PackedScene]
+@export var tempo_powerup_em_campo := 20
+@export var powerup_limit := 10
+var powerup_count := 0
 var pode_spawnar := true
 
-func _ready():
-	_start_spawner()
+func _on_powerup_coletado(_powerup):
+	powerup_count -= 1
+	print_debug("Power-up foi coletado por um jogador!")
 
-func _start_spawner():
-	spawn_powerup()
-	await get_tree().create_timer(cooldown_entre_spawns).timeout
-	_start_spawner()
+func _on_powerup_despawn(_powerup):
+	powerup_count -= 1
+	print_debug("Power-up foi coletado por um jogador!")
 
-func spawn_powerup():
-	if not pode_spawnar:
+func _on_power_timer_timeout() -> void:
+	if not pode_spawnar or powerup_count>= powerup_limit:
 		return
 
+	var powerup_scene = powerup_scenes.pick_random()
 	var powerup = powerup_scene.instantiate()
-	powerup.position = _posicao_aleatoria()
-	add_child(powerup)
-
+	var spawn_location = get_node("../SpawnPath/SpawnLocation")
+	spawn_location.progress_ratio = randf()
+	
+	powerup_count+=1
+	
 	powerup.tempo_ativo = tempo_powerup_em_campo
+	powerup.position = spawn_location.position
 	powerup.connect("powerup_coletado", Callable(self, "_on_powerup_coletado"))
+	powerup.connect("powerup_despawn", Callable(self, "_on_powerup_despawn"))
 
-func _posicao_aleatoria() -> Vector3:
-	var min = area_spawn.position
-	var size = area_spawn.size
-	return Vector3(
-		randf_range(min.x+5, min.x+5 + size.x),
-		0.5, #Altura do chão
-		randf_range(min.z+5, min.z+5 + size.z)
-	)
-
-func _on_powerup_coletado(_powerup):
-	print("Power-up foi coletado por um jogador!")
+	add_child(powerup)
