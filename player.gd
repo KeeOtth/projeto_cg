@@ -1,12 +1,20 @@
 extends CharacterBody3D
 
-@export var speed = 8
+@export var base_speed = 8
+@export var speed = base_speed
 @export var fall_acceleration = 75
 @export var is_active = false
 
 var target_velocity = Vector3.ZERO
 @export var held_ball: RigidBody3D = null
 
+func aplicar_boost_velocidade(duracao: float, multiplicador: float):
+	speed = base_speed * multiplicador
+	print("Boost de velocidade aplicado")
+	await get_tree().create_timer(duracao).timeout
+	speed = base_speed
+	print("Boost de velocidade finalizado")
+	
 func _physics_process(delta):
 	if not is_on_floor():
 		target_velocity.y = target_velocity.y - (fall_acceleration * delta)
@@ -44,7 +52,7 @@ func _physics_process(delta):
 				offset = offset.normalized() * 0.01
 				collider.global_transform.origin += offset
 				collider.apply_impulse(collision.get_normal() * -1 * 0.5, offset)
-
+				
 	if Input.is_action_just_pressed("hold_ball"):
 		if held_ball:
 			held_ball.freeze = false

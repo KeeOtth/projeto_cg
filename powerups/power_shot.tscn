@@ -1,0 +1,22 @@
+[gd_scene load_steps=4 format=3 uid="uid://byvue5q4qrgi1"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_4gmy5"]
+height = 0.0531006
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3l685"]
+albedo_color = Color(0.917145, 0.0205033, 0, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_sf3o7"]
+material = SubResource("StandardMaterial3D_3l685")
+
+[node name="Power_shot" type="Area3D"]
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(0.000663274, -1, -0.000446238, 1, 0.000663117, 0.00034997, -0.000349674, -0.00044647, 1, 0.00323486, 1.01251, -0.0336184)
+shape = SubResource("CylinderShape3D_4gmy5")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.000663307, -0.0265564, -0.000446252, 1, 1.76111e-05, 0.000349952, -0.000349673, -1.18566e-05, 1, 0, 1.01252, -0.0336199)
+mesh = SubResource("CylinderMesh_sf3o7")
+skeleton = NodePath("../..")
