@@ -2,11 +2,14 @@ extends CharacterBody3D
 
 @export var joystick_id := 0
 @onready var collision = $CollisionShape3D
+@onready var anim = $Pivot/Robot/AnimationPlayer
 @export var base_speed = 8
 @export var speed = base_speed
 @export var fall_acceleration = 75
 @export var is_active = false
 @export var time := "Azul"
+@export var base_impulse_strenght := 20
+var actual_impulse_strenght = base_impulse_strenght
 var deadzone = 0.2
 
 var cores_times = {
@@ -21,9 +24,32 @@ var timer_button = {
 var target_velocity = Vector3.ZERO
 @export var held_ball: RigidBody3D = null
 
+func _process(delta):
+	if target_velocity:
+		anim.play("Robot_Running")
+	else:
+		anim.play("Robot_Idle")
+		
 func _ready():
 	var cor = cores_times.get(time, Color(1,1,1))
 	aplicar_cor_nos_meshes_do_indicador(cor)
+	aplicar_cor_nos_meshes_dos_players(cor)
+
+func aplicar_cor_nos_meshes_dos_players(cor: Color):
+	var robot = $Pivot/Robot/RobotArmature/Skeleton3D
+	if robot:
+		print_debug("Entrou aqui viu!(la ele)")
+		for filhos in robot.get_children():
+			if filhos is MeshInstance3D:
+				var mat = StandardMaterial3D.new()
+				mat.albedo_color = cor
+				filhos.set_surface_override_material(0, mat)
+			else:
+				for filho in filhos.get_children():
+					if filho is MeshInstance3D:
+						var mat = StandardMaterial3D.new()
+						mat.albedo_color = cor
+						filho.set_surface_override_material(0, mat)
 
 func aplicar_cor_nos_meshes_do_indicador(cor: Color):
 	var indicador = $Pivot/DirectionalIndicator
@@ -40,7 +66,14 @@ func aplicar_boost_velocidade(duracao: float, multiplicador: float):
 	await get_tree().create_timer(duracao).timeout
 	speed = base_speed
 	print("Boost de velocidade finalizado")
-	
+
+func aplicar_powershot(duracao: float, multiplicador: float):
+	actual_impulse_strenght = base_impulse_strenght * multiplicador
+	print_debug("Powershot aplicado!")
+	await get_tree().create_timer(duracao).timeout
+	actual_impulse_strenght = base_impulse_strenght
+	print_debug("Powershot finalizado!")
+
 func _physics_process(delta):
 	target_velocity = Vector3.ZERO
 	if is_active:
@@ -54,6 +87,7 @@ func process_common(delta):
 	
 	velocity = target_velocity
 	move_and_slide()
+	
 func process_active(delta):
 	var direction = Vector3.ZERO
 
@@ -123,8 +157,9 @@ func process_active(delta):
 		var hold_pos = global_transform.origin + $Pivot.transform.basis.z * -1.6 + Vector3(0, 0.37, 0)
 		held_ball.global_transform.origin = hold_pos
 		var impulse_direction = -$Pivot.basis.z.normalized()
-		var impulse_strength = 20.0
-		held_ball.apply_impulse(impulse_direction * impulse_strength)
+		held_ball.apply_impulse(impulse_direction * actual_impulse_strenght)
+		if actual_impulse_strenght > base_impulse_strenght:
+			actual_impulse_strenght = base_impulse_strenght
 		held_ball = null
 
 	if held_ball:

@@ -37,12 +37,31 @@ func _ready():
 	var all_players = get_tree().get_nodes_in_group("Players")
 	team_a_players = get_tree().get_nodes_in_group("Time_A")
 	team_b_players = get_tree().get_nodes_in_group("Time_B")
-	
+	var escanteios = [
+		$Sketchfab_Scene/Sketchfab_model/jeej/Stadium/Field/Linhas_de_fundo/Azul_sup,
+		$Sketchfab_Scene/Sketchfab_model/jeej/Stadium/Field/Linhas_de_fundo/Azul_inf,
+		$Sketchfab_Scene/Sketchfab_model/jeej/Stadium/Field/Linhas_de_fundo/Verm_inf,
+		$Sketchfab_Scene/Sketchfab_model/jeej/Stadium/Field/Linhas_de_fundo/Verm_sup
+	]
+	var laterais = [
+		$Sketchfab_Scene/Sketchfab_model/jeej/Stadium/Field/Laterais/Lateral_sup,
+		$Sketchfab_Scene/Sketchfab_model/jeej/Stadium/Field/Laterais/Lateral_inf
+	]
+	for lateral in laterais:
+		lateral.body_entered.connect(
+			func(body): _on_lateral_body_entered(lateral, body)
+			)
+
+	for area in escanteios:
+		area.body_entered.connect(
+			func(body): _on_escanteio_area_entered(area, body)
+		)
+
 	# Ativa o primeiro jogador de cada time
 	if team_a_players.size() > 0:
 		team_a_players[0].is_active = true
-	if team_b_players.size() > 0:
-		team_b_players[0].is_active = true
+	#if team_b_players.size() > 0:
+		#team_b_players[0].is_active = true
 
 func _process(delta):
 	if Input.is_joy_button_pressed(0, JOY_BUTTON_RIGHT_SHOULDER):
@@ -67,18 +86,20 @@ func _process(delta):
 				team_b_players[current_index_b].is_active = true
 
 
-func _on_lateral_body_entered(body: Node3D) -> void:
-		body.freeze = true
-		body.get_node("MeshInstance3D").visible = false
-		await get_tree().create_timer(2.0).timeout
-		body.global_transform.origin = Vector3(0, 0.5, 0)
-		body.get_node("MeshInstance3D").visible = true
-		body.freeze = false
+func _on_lateral_body_entered(area: Area3D, body: Node3D) -> void:
+	print("Bola saiu pela área:", area.name)
+	body.freeze = true
+	body.get_node("MeshInstance3D").visible = false
+	await get_tree().create_timer(2.0).timeout
+	body.global_transform.origin = Vector3(0, 0.5, 0)
+	body.get_node("MeshInstance3D").visible = true
+	body.freeze = false
 
-func _on_lateral_2_body_entered(body: Node3D) -> void:
-		body.freeze = true
-		body.get_node("MeshInstance3D").visible = false
-		await get_tree().create_timer(2.0).timeout
-		body.global_transform.origin = Vector3(0, 0.5, 0)
-		body.get_node("MeshInstance3D").visible = true
-		body.freeze = false
+func _on_escanteio_area_entered(area: Area3D, body: Node3D) -> void:
+	print("Bola saiu pela área:", area.name)
+	body.freeze = true
+	body.get_node("MeshInstance3D").visible = false
+	await get_tree().create_timer(2.0).timeout
+	body.global_transform.origin = Vector3(0, 0.5, 0)
+	body.get_node("MeshInstance3D").visible = true
+	body.freeze = false

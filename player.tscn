@@ -1,7 +1,7 @@
 [gd_scene load_steps=8 format=3 uid="uid://bts683nea0mdl"]
 
 [ext_resource type="Script" uid="uid://b4xb635dpyjib" path="res://player.gd" id="1_4flbx"]
-[ext_resource type="PackedScene" uid="uid://di4c10wu6m14b" path="res://models/Robot/Robot.glb" id="2_onrkg"]
+[ext_resource type="PackedScene" uid="uid://ba6oymox1q30b" path="res://models/Robot/Robot.glb" id="2_onrkg"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sh265"]
 albedo_color = Color(0.0328, 0.46576, 0.82, 1)
@@ -27,7 +27,6 @@ script = ExtResource("1_4flbx")
 [node name="Pivot" type="Node3D" parent="."]
 
 [node name="DirectionalIndicator" type="Node3D" parent="Pivot"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15468, 0)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Pivot/DirectionalIndicator"]
 mesh = SubResource("CylinderMesh_4flbx")
@@ -40,5 +39,5 @@ mesh = SubResource("PrismMesh_i3pqv")
 transform = Transform3D(-0.5, 0, -4.37114e-08, 0, 0.5, 0, 4.37114e-08, 0, -0.5, 0, 0, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.978447, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_hqtel")
