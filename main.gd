@@ -8,7 +8,9 @@ var team_b_players = []
 # joystic 1 eh o azul, time b
 var last_switch_time_a := -1
 var last_switch_time_b := -1
-var switch_delay := 1.1
+
+var switch_delay := 1.2
+
 var current_index_a = 0
 var current_index_b = 0
 
@@ -66,14 +68,12 @@ func _process(delta):
 
 
 func _on_lateral_body_entered(body: Node3D) -> void:
-		
 		body.freeze = true
 		body.get_node("MeshInstance3D").visible = false
 		await get_tree().create_timer(2.0).timeout
 		body.global_transform.origin = Vector3(0, 0.5, 0)
 		body.get_node("MeshInstance3D").visible = true
 		body.freeze = false
-
 
 func _on_lateral_2_body_entered(body: Node3D) -> void:
 		body.freeze = true

@@ -13,6 +13,10 @@ var cores_times = {
 	"Azul": Color(0.306, 0.365, 0.796),
 	"Vermelho": Color(0.796, 0.306, 0.314)
 }
+var fixed_delay_button = 1000 #ms
+var timer_button = {
+	"X": 0
+}
 
 var target_velocity = Vector3.ZERO
 @export var held_ball: RigidBody3D = null
@@ -83,8 +87,12 @@ func process_active(delta):
 				offset = offset.normalized() * 0.01
 				collider.global_transform.origin += offset
 				collider.apply_impulse(collision.get_normal() * -1 * 0.5, offset)
-				
-	if Input.is_action_just_pressed("hold_ball") or Input.is_joy_button_pressed(joystick_id, JOY_BUTTON_X):
+	# gambiarra
+	var can_press_x = true
+	if(timer_button["X"] + fixed_delay_button > Time.get_ticks_msec()):
+		can_press_x = false
+	if Input.is_action_just_pressed("hold_ball") or (Input.is_joy_button_pressed(joystick_id, JOY_BUTTON_X) and can_press_x):
+		timer_button["X"] = Time.get_ticks_msec()
 		if held_ball:
 			held_ball.freeze = false
 			held_ball = null
@@ -96,6 +104,7 @@ func process_active(delta):
 			var min_dot = 0.52
 			
 			for ball in get_tree().get_nodes_in_group("Ball"):
+				print_debug("vamos la")
 				if ball is RigidBody3D:
 					var to_ball = (ball.global_transform.origin - player_pos)
 					to_ball.y = 0
@@ -104,6 +113,7 @@ func process_active(delta):
 					var dot = player_dir.dot(direction_to_ball)
 					
 					if distance <= max_distance and dot >= min_dot:
+						print_debug("oxe pegouy")
 						held_ball = ball
 						held_ball.freeze = true
 						break
