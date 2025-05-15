@@ -2,6 +2,7 @@ extends CharacterBody3D
 
 @export var joystick_id := 0
 @onready var collision = $CollisionShape3D
+@onready var anim = $Pivot/fox/AnimationPlayer
 @export var base_speed = 8
 @export var speed = base_speed
 @export var fall_acceleration = 75
@@ -9,6 +10,15 @@ extends CharacterBody3D
 @export var time := "Azul"
 var deadzone = 0.2
 
+func is_moving() -> bool:
+	return velocity.length() > 0.1
+	
+func _process(delta):
+	if is_moving():
+		anim.play("Run")
+	else:
+		anim.play("Idle")
+		
 var cores_times = {
 	"Azul": Color(0.306, 0.365, 0.796),
 	"Vermelho": Color(0.796, 0.306, 0.314)

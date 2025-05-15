@@ -11,8 +11,10 @@ var last_switch_time_b := -1
 var switch_delay := 1.1
 var current_index_a = 0
 var current_index_b = 0
+@onready var confetti := $Explosion/CPUParticles3D
 
 func _on_blue_team_gol_body_entered(body: Node3D) -> void:
+	confetti.restart()
 	get_node("/root/Main/Placar").contabilizar_gols("B")
 	body.freeze = true
 	body.get_node("MeshInstance3D").visible = false
@@ -22,6 +24,7 @@ func _on_blue_team_gol_body_entered(body: Node3D) -> void:
 	body.freeze = false
 		
 func _on_red_team_gol_body_entered(body: Node3D) -> void:
+	confetti.restart()
 	get_node("/root/Main/Placar").contabilizar_gols("A")
 	body.freeze = true
 	body.get_node("MeshInstance3D").visible = false
@@ -39,8 +42,8 @@ func _ready():
 	# Ativa o primeiro jogador de cada time
 	if team_a_players.size() > 0:
 		team_a_players[0].is_active = true
-	if team_b_players.size() > 0:
-		team_b_players[0].is_active = true
+	#if team_b_players.size() > 0:
+		#team_b_players[0].is_active = true
 
 func _process(delta):
 	if Input.is_joy_button_pressed(0, JOY_BUTTON_RIGHT_SHOULDER):
