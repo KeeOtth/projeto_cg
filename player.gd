@@ -2,13 +2,14 @@ extends CharacterBody3D
 
 @export var joystick_id := 0
 @onready var collision = $CollisionShape3D
-@onready var anim = $Pivot/Robot/AnimationPlayer
+@export var anim: AnimationPlayer = null
 @export var base_speed = 8
 @export var speed = base_speed
 @export var fall_acceleration = 75
 @export var is_active = false
 @export var time := "Azul"
 @export var base_impulse_strenght := 20
+
 var actual_impulse_strenght = base_impulse_strenght
 var deadzone = 0.2
 
@@ -25,12 +26,16 @@ var target_velocity = Vector3.ZERO
 @export var held_ball: RigidBody3D = null
 
 func _process(delta):
-	if target_velocity:
-		anim.play("Robot_Running")
-	else:
-		anim.play("Robot_Idle")
+	if !get_node("/root/Main").is_replaying:
+		if anim.current_animation in ["Robot_Running", "Robot_Idle", null, ""]:
+			if target_velocity:
+				anim.play("Robot_Running")
+			else:
+				anim.play("Robot_Idle")
 		
 func _ready():
+	anim = $Pivot/Robot/AnimationPlayer
+	
 	var cor = cores_times.get(time, Color(1,1,1))
 	aplicar_cor_nos_meshes_do_indicador(cor)
 	aplicar_cor_nos_meshes_dos_players(cor)
@@ -91,14 +96,25 @@ func process_common(delta):
 func process_active(delta):
 	var direction = Vector3.ZERO
 
-	if Input.is_action_pressed("move_back") or Input.get_joy_axis(joystick_id, JOY_AXIS_LEFT_Y) > deadzone:
+	if Input.is_action_pressed("move_back"):
 		direction.x += 1
-	if Input.is_action_pressed("move_forward") or Input.get_joy_axis(joystick_id, JOY_AXIS_LEFT_Y) < -deadzone:
+	elif Input.get_joy_axis(joystick_id, JOY_AXIS_LEFT_Y) > deadzone:
+		direction.x += Input.get_joy_axis(joystick_id, JOY_AXIS_LEFT_Y)
+	
+	if Input.is_action_pressed("move_forward"):
 		direction.x -= 1
-	if Input.is_action_pressed("move_right") or Input.get_joy_axis(joystick_id, JOY_AXIS_LEFT_X) > deadzone:
+	elif Input.get_joy_axis(joystick_id, JOY_AXIS_LEFT_Y) < -deadzone:
+		direction.x += Input.get_joy_axis(joystick_id, JOY_AXIS_LEFT_Y)
+		
+	if Input.is_action_pressed("move_right"):
 		direction.z -= 1
-	if Input.is_action_pressed("move_left") or Input.get_joy_axis(joystick_id, JOY_AXIS_LEFT_X) < -deadzone:
+	elif Input.get_joy_axis(joystick_id, JOY_AXIS_LEFT_X) > deadzone:
+		direction.z -= Input.get_joy_axis(joystick_id, JOY_AXIS_LEFT_X)
+		
+	if Input.is_action_pressed("move_left"):
 		direction.z += 1
+	elif Input.get_joy_axis(joystick_id, JOY_AXIS_LEFT_X) < -deadzone:
+		direction.z -= Input.get_joy_axis(joystick_id, JOY_AXIS_LEFT_X)
 
 	
 
