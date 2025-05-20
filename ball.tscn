@@ -1,12 +1,17 @@
-[gd_scene load_steps=6 format=3 uid="uid://d0slynyqmiqa1"]
+[gd_scene load_steps=8 format=3 uid="uid://d0slynyqmiqa1"]
 
 [ext_resource type="Script" uid="uid://b6fplpfjpnwq3" path="res://ball.gd" id="1_x8fbi"]
+[ext_resource type="Texture2D" uid="uid://bnhic0ugjr8fv" path="res://fox/Textures/vecteezy_football-soccer-texture-vector-background_104941.jpg" id="2_41u45"]
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_cbx31"]
 friction = 2.0
 bounce = 0.52
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ktgx5"]
+albedo_texture = ExtResource("2_41u45")
+
 [sub_resource type="SphereMesh" id="SphereMesh_x8fbi"]
+material = SubResource("StandardMaterial3D_ktgx5")
 radius = 0.4
 height = 0.8
 
