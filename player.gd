@@ -9,6 +9,7 @@ extends CharacterBody3D
 @export var is_active = false
 @export var time := "Azul"
 @export var base_impulse_strenght := 20
+var is_rotating = false
 
 var actual_impulse_strenght = base_impulse_strenght
 var deadzone = 0.2
@@ -22,10 +23,11 @@ var timer_button = {
 	"X": 0
 }
 
+var is_batedor = false
 var target_velocity = Vector3.ZERO
 @export var held_ball: RigidBody3D = null
 
-func _process(delta):
+func _process(_delta):
 	if !get_node("/root/Main").is_replaying:
 		if anim.current_animation in ["Robot_Running", "Robot_Idle", null, ""]:
 			if target_velocity:
@@ -83,7 +85,40 @@ func _physics_process(delta):
 	target_velocity = Vector3.ZERO
 	if is_active:
 		process_active(delta)
+	elif is_batedor:
+		process_batedor(delta)
 	process_common(delta)
+
+func process_batedor(delta):
+	if get_node("/root/Main").is_replaying:
+		return
+	var direction = Vector3.ZERO
+	# nao pode andar, apenas rotacionar um angulo de min 20 ateh max 160 com o joystick right
+	# ou seja, so pode fazer uma meia lua
+	if Input.get_joy_axis(joystick_id, JOY_AXIS_RIGHT_Y) > deadzone:
+		direction.x += Input.get_joy_axis(joystick_id, JOY_AXIS_RIGHT_Y)
+	if Input.get_joy_axis(joystick_id, JOY_AXIS_RIGHT_Y) < -deadzone:
+		direction.x += Input.get_joy_axis(joystick_id, JOY_AXIS_RIGHT_Y)
+	if Input.get_joy_axis(joystick_id, JOY_AXIS_RIGHT_X) > deadzone:
+		direction.z -= Input.get_joy_axis(joystick_id, JOY_AXIS_RIGHT_X)
+	if Input.get_joy_axis(joystick_id, JOY_AXIS_RIGHT_X) < -deadzone:
+		direction.z -= Input.get_joy_axis(joystick_id, JOY_AXIS_RIGHT_X)
+
+	if direction != Vector3.ZERO:
+		direction = direction.normalized()
+		var current_basis = $Pivot.basis
+		var target_basis = Basis.looking_at(direction, Vector3.UP)
+		$Pivot.basis = current_basis.slerp(target_basis, delta*3)
+
+	if Input.is_joy_button_pressed(joystick_id, JOY_BUTTON_B):
+		var main = get_node("/root/Main")
+
+		if main.is_lateral:
+			held_ball.throw_ball(actual_impulse_strenght)
+			held_ball = null
+			main.is_lateral = false
+			main.lateral_team = null
+			main.lateral_player = null
 
 func process_common(delta):
 	if not is_on_floor():
@@ -94,6 +129,8 @@ func process_common(delta):
 	move_and_slide()
 	
 func process_active(delta):
+	if get_node("/root/Main").is_replaying:
+		return
 	var direction = Vector3.ZERO
 
 	if Input.is_action_pressed("move_back"):
@@ -141,43 +178,71 @@ func process_active(delta):
 	var can_press_x = true
 	if(timer_button["X"] + fixed_delay_button > Time.get_ticks_msec()):
 		can_press_x = false
-	if Input.is_action_just_pressed("hold_ball") or (Input.is_joy_button_pressed(joystick_id, JOY_BUTTON_X) and can_press_x):
+
+	if (Input.is_action_just_pressed("hold_ball") or (Input.is_joy_button_pressed(joystick_id, JOY_BUTTON_X) and can_press_x)):
 		timer_button["X"] = Time.get_ticks_msec()
 		if held_ball:
-			held_ball.freeze = false
+			held_ball.holder = null
 			held_ball = null
 		else:
-			var player_pos = global_transform.origin
-			var player_dir = -$Pivot.transform.basis.z
-			player_dir = player_dir.normalized()
-			var max_distance = 1.5
-			var min_dot = 0.52
-			
 			for ball in get_tree().get_nodes_in_group("Ball"):
-				print_debug("vamos la")
-				if ball is RigidBody3D:
-					var to_ball = (ball.global_transform.origin - player_pos)
-					to_ball.y = 0
-					var distance = to_ball.length()
-					var direction_to_ball = to_ball.normalized()
-					var dot = player_dir.dot(direction_to_ball)
-					
-					if distance <= max_distance and dot >= min_dot:
-						print_debug("oxe pegouy")
-						held_ball = ball
-						held_ball.freeze = true
-						break
+				if ball is RigidBody3D and ball.has_method("try_pick_up") and ball.try_pick_up(self):
+					held_ball = ball
+					if time == "Azul":
+						Globals.last_team = Globals.TIME_AZUL
+					else:
+						Globals.last_team = Globals.TIME_VERMELHO
+					print(Globals.last_team)
+					break
 
-	if (Input.is_action_just_pressed("attack") or  Input.is_joy_button_pressed(joystick_id, JOY_BUTTON_A)) and held_ball:
-		held_ball.freeze = false
-		var hold_pos = global_transform.origin + $Pivot.transform.basis.z * -1.6 + Vector3(0, 0.37, 0)
-		held_ball.global_transform.origin = hold_pos
-		var impulse_direction = -$Pivot.basis.z.normalized()
-		held_ball.apply_impulse(impulse_direction * actual_impulse_strenght)
-		if actual_impulse_strenght > base_impulse_strenght:
-			actual_impulse_strenght = base_impulse_strenght
+	if (Input.is_action_just_pressed("attack") or Input.is_joy_button_pressed(joystick_id, JOY_BUTTON_A)) and held_ball:
+		held_ball.throw_ball(actual_impulse_strenght)
 		held_ball = null
 
-	if held_ball:
-		var hold_pos = global_transform.origin + $Pivot.transform.basis.z * -1.2 + Vector3(0, 0.37, 0)
-		held_ball.global_transform.origin = hold_pos
+	if Input.is_joy_button_pressed(joystick_id, JOY_BUTTON_B) and held_ball:
+		var teammate = get_nearest_teammate()
+		if teammate:
+			var ball = held_ball
+			var to_target = teammate.global_transform.origin - global_transform.origin
+			var distance = to_target.length()
+			var pass_dir = to_target.normalized()
+
+			var min_force = 3.0
+			var max_force = actual_impulse_strenght * 0.7
+			var force = clamp(distance, min_force, max_force)
+
+			is_active = false
+			teammate.is_active = true
+			await rotate_towards(pass_dir)
+
+			if held_ball == ball:
+				ball.pass_to(pass_dir, force)
+				held_ball = null
+
+
+func get_nearest_teammate() -> CharacterBody3D:
+	var teammates = []
+	if time == "Azul":
+		teammates = get_tree().get_nodes_in_group("Time_Azul")
+	else:
+		teammates = get_tree().get_nodes_in_group("Time_Vermelho")
+	
+	var closest_player = null
+	var min_dist = INF
+	
+	for p in teammates:
+		if p == self:
+			continue
+		var dist = global_transform.origin.distance_to(p.global_transform.origin)
+		if dist < min_dist:
+			min_dist = dist
+			closest_player = p
+	
+	return closest_player
+
+func rotate_towards(target_dir: Vector3) -> void:
+	var target_basis = Basis.looking_at(target_dir, Vector3.UP)
+	while $Pivot.basis.get_euler().distance_to(target_basis.get_euler()) > 0.05:
+		$Pivot.basis = $Pivot.basis.slerp(target_basis, 0.1)
+		await get_tree().process_frame
+	is_rotating = false

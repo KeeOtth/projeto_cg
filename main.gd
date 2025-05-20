@@ -1,18 +1,19 @@
 extends Node3D
 
 var all_players = []
-var team_a_players = []
-var team_b_players = []
+var team_azul_players = []
+var team_vermelho_players = []
 
-# joystic 0 eh o vermelho, time a
-# joystic 1 eh o azul, time b
-var last_switch_time_a := -1
-var last_switch_time_b := -1
+# joystic 0 eh o vermelho
+# joystic 1 eh o azul
+var last_switch_time_azul := -1
+var last_switch_time_vermelho := -1
 
 var switch_delay := 1.2
 
-var current_index_a = 0
-var current_index_b = 0
+var current_index_azul = 0
+var current_index_vermelho = 0
+
 var bad_animations = [
 	"Robot_Death",
 	"Robot_No",
@@ -30,35 +31,39 @@ const MAX_REPLAY_FRAMES := 600 # ~5s a 60 FPS
 var replay_frames := []
 var is_replaying := false
 var replay_index := 0
+var original_frame_0 = []
 
+
+## laterais
+var is_lateral := false
+var lateral_team = null  # "Azul" ou "Vermelho"
+var lateral_player: CharacterBody3D = null
 
 func _on_blue_team_gol_body_entered(body: Node3D) -> void:
-	for player_blue in team_a_players:
+	for player_blue in team_azul_players:
 		player_blue.anim.play(bad_animations.pick_random())
 	
-	for player_red in team_b_players:
+	for player_red in team_vermelho_players:
 		player_red.anim.play(good_animations.pick_random())
 
-	get_node("/root/Main/Placar").contabilizar_gols("B")
+	get_node("/root/Main/Placar").contabilizar_gols(Globals.TIME_VERMELHO)
 	body.freeze = true
 	body.get_node("MeshInstance3D").visible = false
 
-	await get_tree().create_timer(3.0).timeout
+	await get_tree().create_timer(5.0).timeout
 	start_replay()
 	body.global_transform.origin = Vector3(0, 0.5, 0)
 	body.get_node("MeshInstance3D").visible = true
 	body.freeze = false
-	
-
 
 func _on_red_team_gol_body_entered(body: Node3D) -> void:
-	for player_blue in team_a_players:
+	for player_blue in team_azul_players:
 		player_blue.anim.play(good_animations.pick_random())
 	
-	for player_red in team_b_players:
+	for player_red in team_vermelho_players:
 		player_red.anim.play(bad_animations.pick_random())
 		
-	get_node("/root/Main/Placar").contabilizar_gols("A")
+	get_node("/root/Main/Placar").contabilizar_gols(Globals.TIME_AZUL)
 	body.freeze = true
 	body.get_node("MeshInstance3D").visible = false
 	start_replay()
@@ -72,8 +77,8 @@ func _on_red_team_gol_body_entered(body: Node3D) -> void:
 func _ready():
 	# Pega todos os jogadores
 	all_players = get_tree().get_nodes_in_group("Players")
-	team_a_players = get_tree().get_nodes_in_group("Time_A")
-	team_b_players = get_tree().get_nodes_in_group("Time_B")
+	team_azul_players = get_tree().get_nodes_in_group("Time_Azul")
+	team_vermelho_players = get_tree().get_nodes_in_group("Time_Vermelho")
 	var escanteios = [
 		$Sketchfab_Scene/Sketchfab_model/jeej/Stadium/Field/Linhas_de_fundo/Azul_sup,
 		$Sketchfab_Scene/Sketchfab_model/jeej/Stadium/Field/Linhas_de_fundo/Azul_inf,
@@ -97,36 +102,68 @@ func _ready():
 		)
 
 	# Ativa o primeiro jogador de cada time
-	if team_a_players.size() > 0:
-		team_a_players[0].is_active = true
-	if team_b_players.size() > 0:
-		team_b_players[0].is_active = true
+	if team_azul_players.size() > 0:
+		team_azul_players[0].is_active = true
+	if team_vermelho_players.size() > 0:
+		team_vermelho_players[0].is_active = true
+	
+	original_frame_0 = {
+		"ball_pos": $Ball.global_transform.origin,
+		"team_azul": [],
+		"team_vermelho": [],
+		"direction_a": [],
+		"direction_b": []
+	}
 
-func _process(delta):
+	for player in all_players:
+		player.get_node("Pivot").look_at(Vector3(0, 0, 0), Vector3.UP)
+		player.anim.play("Robot_Idle")
+
+	for player in team_azul_players:
+		var pos = player.global_transform.origin
+		var rot = player.get_node("Pivot").global_transform.basis
+
+		original_frame_0["team_azul"].append({
+			"position": pos,
+			"pivot_basis": rot
+		})
+
+	for player in team_vermelho_players:
+		var pos = player.global_transform.origin
+		var rot = player.get_node("Pivot").global_transform.basis
+
+		original_frame_0["team_vermelho"].append({
+			"position": pos,
+			"pivot_basis": rot
+		})
+	
+
+
+func _process(_delta):
 	if not is_replaying:
 		var frame = {
 			"ball_pos": $Ball.global_transform.origin,
-			"team_a": [],
-			"team_b": [],
+			"team_azul": [],
+			"team_vermelho": [],
 			"direction_a": [],
 			"direction_b": []
 		}
 
-		for player in team_a_players:
+		for player in team_azul_players:
 			var pos = player.global_transform.origin
 			var rot = player.get_node("Pivot").global_transform.basis
 
-			frame["team_a"].append({
+			frame["team_azul"].append({
 				"position": pos,
 				"pivot_basis": rot
 			})
 
 
-		for player in team_b_players:
+		for player in team_vermelho_players:
 			var pos = player.global_transform.origin
 			var rot = player.get_node("Pivot").global_transform.basis
 
-			frame["team_b"].append({
+			frame["team_vermelho"].append({
 				"position": pos,
 				"pivot_basis": rot
 			})
@@ -141,82 +178,177 @@ func _process(delta):
 			var frame = replay_frames[replay_index]
 			$Ball.global_transform.origin = frame["ball_pos"]
 			
-			for i in frame["team_a"].size():
-				var last_pos = team_a_players[i].global_transform.origin
-				team_a_players[i].global_transform.origin = frame["team_a"][i]["position"] 
+			for i in frame["team_azul"].size():
+				var last_pos = team_azul_players[i].global_transform.origin
+				team_azul_players[i].global_transform.origin = frame["team_azul"][i]["position"] 
 
-				var vel = (frame["team_a"][i]["position"] - last_pos).length()
+				var vel = (frame["team_azul"][i]["position"] - last_pos).length()
 				if vel > 0.1:
-					if team_a_players[i].anim.current_animation != "Robot_Running":
-						team_a_players[i].anim.play("Robot_Running")
+					if team_azul_players[i].anim.current_animation != "Robot_Running":
+						team_azul_players[i].anim.play("Robot_Running")
 				else:
-					if team_b_players[i].anim.current_animation != "Robot_Idle":
-						team_a_players[i].anim.play("Robot_Idle")
-				team_a_players[i].global_transform.origin = frame["team_a"][i]["position"] 
-				team_a_players[i].get_node("Pivot").global_transform.basis = frame["team_a"][i]["pivot_basis"]
+					if team_vermelho_players[i].anim.current_animation != "Robot_Idle":
+						team_azul_players[i].anim.play("Robot_Idle")
+				team_azul_players[i].global_transform.origin = frame["team_azul"][i]["position"] 
+				team_azul_players[i].get_node("Pivot").global_transform.basis = frame["team_azul"][i]["pivot_basis"]
 				
-			for i in frame["team_b"].size():
-				var last_pos = team_b_players[i].global_transform.origin
-				team_b_players[i].global_transform.origin = frame["team_b"][i]["position"] 
+			for i in frame["team_vermelho"].size():
+				var last_pos = team_vermelho_players[i].global_transform.origin
+				team_vermelho_players[i].global_transform.origin = frame["team_vermelho"][i]["position"] 
 
-				var vel = abs((frame["team_b"][i]["position"]  - last_pos).length())
+				var vel = abs((frame["team_vermelho"][i]["position"]  - last_pos).length())
 
 				if vel > 0.1:
-					if team_b_players[i].anim.current_animation != "Robot_Running":
-						team_b_players[i].anim.play("Robot_Running")
+					if team_vermelho_players[i].anim.current_animation != "Robot_Running":
+						team_vermelho_players[i].anim.play("Robot_Running")
 				else:
-					if team_b_players[i].anim.current_animation != "Robot_Idle":
-						team_b_players[i].anim.play("Robot_Idle")
+					if team_vermelho_players[i].anim.current_animation != "Robot_Idle":
+						team_vermelho_players[i].anim.play("Robot_Idle")
 
-				team_b_players[i].global_transform.origin = frame["team_b"][i]["position"] 
-				team_b_players[i].get_node("Pivot").global_transform.basis = frame["team_b"][i]["pivot_basis"]
+				team_vermelho_players[i].global_transform.origin = frame["team_vermelho"][i]["position"] 
+				team_vermelho_players[i].get_node("Pivot").global_transform.basis = frame["team_vermelho"][i]["pivot_basis"]
 
 			replay_index += 1
 		else:
-			get_tree().reload_current_scene()
+			$Ball.freeze = false
+			is_replaying = false
+			replay_index = 0
+			$Ball.global_transform.origin = original_frame_0["ball_pos"]
+			$Ball.get_node("MeshInstance3D").visible = true
+			$Ball.holder = null
+			for i in original_frame_0["team_azul"].size():
+				team_azul_players[i].global_transform.origin = original_frame_0["team_azul"][i]["position"] 
+				team_azul_players[i].get_node("Pivot").global_transform.basis = original_frame_0["team_azul"][i]["pivot_basis"]
+				team_azul_players[i].anim.play("Robot_Idle")
+				team_azul_players[i].is_active = false
+				team_azul_players[i].set_physics_process(false)
+				team_azul_players[i].held_ball = null
+			for i in original_frame_0["team_vermelho"].size():
+				team_vermelho_players[i].global_transform.origin = original_frame_0["team_vermelho"][i]["position"] 
+				team_vermelho_players[i].get_node("Pivot").global_transform.basis = original_frame_0["team_vermelho"][i]["pivot_basis"]
+				team_vermelho_players[i].anim.play("Robot_Idle")
+				team_vermelho_players[i].is_active = false
+				team_vermelho_players[i].set_physics_process(false)
+				team_vermelho_players[i].held_ball = null
+
+			# Ativa o primeiro jogador de cada time
+			if team_azul_players.size() > 0:
+				team_azul_players[0].is_active = true
+			if team_vermelho_players.size() > 0:
+				team_vermelho_players[0].is_active = true
 			for player in all_players:
 				player.set_physics_process(true)
 	
-	if Input.is_joy_button_pressed(0, JOY_BUTTON_RIGHT_SHOULDER):
-			if(Time.get_ticks_msec() / 1000.0 - last_switch_time_a >= switch_delay):
-				team_a_players[current_index_a].is_active = false
-				if team_a_players[current_index_a].held_ball:
-					team_a_players[current_index_a].held_ball.freeze = false
-					team_a_players[current_index_a].held_ball = null
-				last_switch_time_a = Time.get_ticks_msec() / 1000.0
-				current_index_a = (current_index_a + 1) % team_a_players.size()
-				print(current_index_a)
-				team_a_players[current_index_a].is_active = true
+	if not is_replaying and not is_lateral:
+		if Input.is_joy_button_pressed(1, JOY_BUTTON_RIGHT_SHOULDER):
+				if(Time.get_ticks_msec() / 1000.0 - last_switch_time_azul >= switch_delay):
+					team_azul_players[current_index_azul].is_active = false
+					if team_azul_players[current_index_azul].held_ball:
+						team_azul_players[current_index_azul].held_ball.holder = null
+						team_azul_players[current_index_azul].held_ball = null
+					last_switch_time_azul = Time.get_ticks_msec() / 1000.0
+					current_index_azul = (current_index_azul + 1) % team_azul_players.size()
+					team_azul_players[current_index_azul].is_active = true
 
-	if Input.is_joy_button_pressed(1, JOY_BUTTON_RIGHT_SHOULDER):
-			if(Time.get_ticks_msec() / 1000.0 - last_switch_time_b >= switch_delay):
-				team_b_players[current_index_b].is_active = false
-				if team_b_players[current_index_b].held_ball:
-					team_b_players[current_index_b].held_ball.freeze = false
-					team_b_players[current_index_b].held_ball = null
-				last_switch_time_b = Time.get_ticks_msec() / 1000.0
-				current_index_b = (current_index_b + 1) % team_b_players.size()
-				team_b_players[current_index_b].is_active = true
-
+		if Input.is_joy_button_pressed(0, JOY_BUTTON_RIGHT_SHOULDER):
+				if(Time.get_ticks_msec() / 1000.0 - last_switch_time_vermelho >= switch_delay):
+					team_vermelho_players[current_index_vermelho].is_active = false
+					if team_vermelho_players[current_index_vermelho].held_ball:
+						team_azul_players[current_index_azul].held_ball.holder = null
+						team_vermelho_players[current_index_vermelho].held_ball = null
+					last_switch_time_vermelho = Time.get_ticks_msec() / 1000.0
+					current_index_vermelho = (current_index_vermelho + 1) % team_vermelho_players.size()
+					team_vermelho_players[current_index_vermelho].is_active = true
 
 func _on_lateral_body_entered(area: Area3D, body: Node3D) -> void:
-	print("Bola saiu pela área:", area.name)
+	if is_lateral or is_replaying:
+		return
+	
+	print("Bola saiu pela lateral:", area.name)
+
+	is_lateral = true
 	body.freeze = true
 	body.get_node("MeshInstance3D").visible = false
-	await get_tree().create_timer(2.0).timeout
-	body.global_transform.origin = Vector3(0, 0.5, 0)
+
+	var pos = body.global_transform.origin
+	pos.y = 0
+	if Globals.last_team == Globals.TIME_AZUL:
+		lateral_team =  Globals.TIME_VERMELHO
+	else:
+		lateral_team =  Globals.TIME_AZUL
+
+	var players = null
+	if lateral_team == Globals.TIME_AZUL:
+		players = team_azul_players
+	else:
+		players =  team_vermelho_players
+
+	lateral_player = get_nearest_player(players, pos)
+	lateral_player.global_transform.origin = pos
+	await get_tree().create_timer(1.0).timeout
 	body.get_node("MeshInstance3D").visible = true
 	body.freeze = false
 
-func _on_escanteio_area_entered(area: Area3D, body: Node3D) -> void:
-	print("Bola saiu pela área:", area.name)
-	body.freeze = true
-	body.get_node("MeshInstance3D").visible = false
-	await get_tree().create_timer(2.0).timeout
-	body.global_transform.origin = Vector3(0, 0.5, 0)
-	body.get_node("MeshInstance3D").visible = true
-	body.freeze = false
+	if body.holder:
+		body.holder.held_ball = null
+		body.holder = null
+
+	lateral_player.is_batedor = true
+	lateral_player.is_active = false
+	# fazer o lateral olhar para o centro di canmpo
+	lateral_player.anim.play("Robot_Idle")
+	lateral_player.get_node("Pivot").look_at(Vector3(0, 0, 0), Vector3.UP)
+	var other = lateral_player.get_nearest_teammate()
+
+	for player in players:
+		if player != lateral_player:
+			player.is_active = false
+			player.is_batedor = false
+			player.anim.play("Robot_Idle")
+
+	if other:
+		other.is_active = true
+		other.is_batedor = false
+		other.anim.play("Robot_Idle")
+	else:
+		print("NENHUM JOGADOR PROXIMO")
 	
+	lateral_player.held_ball = body
+	body.holder = lateral_player
+
+	print("Lateral para o time:", lateral_team)
+
+
+func _on_escanteio_area_entered(area: Area3D, body: Node3D) -> void:
+	print("Bola saiu para escanteio:", area.name)
+
+	# Define os corners do campo
+	var corners = {
+		"Azul_sup": Vector3(-18, 0, 28),
+		"Azul_inf": Vector3(18, 0, 28),
+		"Verm_sup": Vector3(-18, 0, -28),
+		"Verm_inf": Vector3(18, 0, -28)
+	}
+
+	if area.name in corners:
+		body.global_transform.origin = corners[area.name]
+		body.freeze = true
+		body.get_node("MeshInstance3D").visible = true
+		print("Bola posicionada no corner:", corners[area.name])
+
+	_on_lateral_body_entered(area, body)
+
+
 func start_replay():
 	is_replaying = true
 	replay_index = 0
+	
+func get_nearest_player(players: Array, position: Vector3) -> CharacterBody3D:
+	var closest = null
+	var min_dist = INF
+	for player in players:
+		var dist = player.global_transform.origin.distance_to(position)
+		if dist < min_dist:
+			min_dist = dist
+			closest = player
+	return closest

@@ -1,4 +1,6 @@
-[gd_scene load_steps=4 format=3 uid="uid://d0slynyqmiqa1"]
+[gd_scene load_steps=6 format=3 uid="uid://d0slynyqmiqa1"]
+
+[ext_resource type="Script" uid="uid://b6fplpfjpnwq3" path="res://ball.gd" id="1_x8fbi"]
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_cbx31"]
 friction = 2.0
@@ -11,12 +13,24 @@ height = 0.8
 [sub_resource type="SphereShape3D" id="SphereShape3D_41u45"]
 radius = 0.4
 
+[sub_resource type="SphereShape3D" id="SphereShape3D_x8fbi"]
+radius = 0.45
+
 [node name="Ball" type="RigidBody3D"]
 physics_material_override = SubResource("PhysicsMaterial_cbx31")
 angular_damp = 2.0
+script = ExtResource("1_x8fbi")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 mesh = SubResource("SphereMesh_x8fbi")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("SphereShape3D_41u45")
+
+[node name="Area3D" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+shape = SubResource("SphereShape3D_x8fbi")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
+[connection signal="body_entered" from="Area3D" to="." method="_on_body_entered"]
