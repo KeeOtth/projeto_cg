@@ -12,6 +12,9 @@ func _physics_process(delta):
 		global_transform.origin = hold_pos
 
 func try_pick_up(player: CharacterBody3D) -> bool:
+	if $"..".is_lateral:
+		return false
+	
 	var player_pos = player.global_transform.origin
 	var player_dir = -player.get_node("Pivot").transform.basis.z.normalized()
 	var to_ball = global_transform.origin - player_pos
@@ -32,6 +35,7 @@ func try_pick_up(player: CharacterBody3D) -> bool:
 func throw_ball(impulse_strength: float):
 	if not holder:
 		return
+	freeze = false
 	var impulse_direction = -holder.get_node("Pivot").basis.z.normalized()
 	apply_impulse(impulse_direction * impulse_strength)
 	holder = null

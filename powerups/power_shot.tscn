@@ -1,7 +1,7 @@
 [gd_scene load_steps=12 format=4 uid="uid://byvue5q4qrgi1"]
 
 [ext_resource type="Script" uid="uid://cmitakh8prfut" path="res://powerups/power_shot.gd" id="1_3l685"]
-[ext_resource type="Texture2D" uid="uid://dnohne0orokfu" path="res://models/luva/boxing_gloves_-_left_handed_0.png" id="2_sf3o7"]
+[ext_resource type="Texture2D" uid="uid://ga5q6c32j0yg" path="res://models/luva/boxing_gloves_-_left_handed_0.png" id="2_sf3o7"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_4gmy5"]
 height = 0.0531006
