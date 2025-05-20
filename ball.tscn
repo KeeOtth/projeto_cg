@@ -1,7 +1,7 @@
 [gd_scene load_steps=8 format=3 uid="uid://d0slynyqmiqa1"]
 
 [ext_resource type="Script" uid="uid://b6fplpfjpnwq3" path="res://ball.gd" id="1_x8fbi"]
-[ext_resource type="Texture2D" uid="uid://bnhic0ugjr8fv" path="res://fox/Textures/vecteezy_football-soccer-texture-vector-background_104941.jpg" id="2_41u45"]
+[ext_resource type="Texture2D" uid="uid://bnhic0ugjr8fv" path="res://Textures/vecteezy_football-soccer-texture-vector-background_104941.jpg" id="2_41u45"]
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_cbx31"]
 friction = 2.0
