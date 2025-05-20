@@ -1,7 +1,7 @@
 [gd_scene load_steps=8 format=3 uid="uid://c4qar6jt8afcv"]
 
 [ext_resource type="Script" uid="uid://by4qk52m1ft7x" path="res://powerups/speed.gd" id="1_omy76"]
-[ext_resource type="PackedScene" uid="uid://dsbm4cxn6jjc4" path="res://models/boots-of-swiftness/boots_of_swiftness.glb" id="2_hgl78"]
+[ext_resource type="PackedScene" uid="uid://bhobe4e0t5qbv" path="res://models/boots-of-swiftness/boots_of_swiftness.glb" id="2_hgl78"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_lp0nf"]
 height = 0.0531006

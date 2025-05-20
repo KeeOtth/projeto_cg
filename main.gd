@@ -35,11 +35,13 @@ var original_frame_0 = []
 
 
 ## laterais
+var is_gol := false
 var is_lateral := false
 var lateral_team = null  # "Azul" ou "Vermelho"
 var lateral_player: CharacterBody3D = null
 
 func _on_blue_team_gol_body_entered(body: Node3D) -> void:
+	is_gol = true
 	for player_blue in team_azul_players:
 		player_blue.anim.play(bad_animations.pick_random())
 	
@@ -51,12 +53,14 @@ func _on_blue_team_gol_body_entered(body: Node3D) -> void:
 	body.get_node("MeshInstance3D").visible = false
 
 	await get_tree().create_timer(5.0).timeout
+	for player in all_players:
+		player.anim.play("idle")
 	start_replay()
-	body.global_transform.origin = Vector3(0, 0.5, 0)
 	body.get_node("MeshInstance3D").visible = true
 	body.freeze = false
 
 func _on_red_team_gol_body_entered(body: Node3D) -> void:
+	is_gol = true
 	for player_blue in team_azul_players:
 		player_blue.anim.play(good_animations.pick_random())
 	
@@ -66,9 +70,11 @@ func _on_red_team_gol_body_entered(body: Node3D) -> void:
 	get_node("/root/Main/Placar").contabilizar_gols(Globals.TIME_AZUL)
 	body.freeze = true
 	body.get_node("MeshInstance3D").visible = false
+
+	await get_tree().create_timer(5.0).timeout
+	for player in all_players:
+		player.anim.play("idle")
 	start_replay()
-	await get_tree().create_timer(2.0).timeout
-	body.global_transform.origin = Vector3(0, 0.5, 0)
 	body.get_node("MeshInstance3D").visible = true
 	body.freeze = false
 
@@ -125,7 +131,8 @@ func _ready():
 
 		original_frame_0["team_azul"].append({
 			"position": pos,
-			"pivot_basis": rot
+			"pivot_basis": rot,
+			"animation": player.anim.current_animation
 		})
 
 	for player in team_vermelho_players:
@@ -134,7 +141,8 @@ func _ready():
 
 		original_frame_0["team_vermelho"].append({
 			"position": pos,
-			"pivot_basis": rot
+			"pivot_basis": rot,
+			"animation": player.anim.current_animation
 		})
 	
 
@@ -146,7 +154,7 @@ func _process(_delta):
 			"team_azul": [],
 			"team_vermelho": [],
 			"direction_a": [],
-			"direction_b": []
+			"direction_b": [],
 		}
 
 		for player in team_azul_players:
@@ -155,7 +163,8 @@ func _process(_delta):
 
 			frame["team_azul"].append({
 				"position": pos,
-				"pivot_basis": rot
+				"pivot_basis": rot,
+				"animation": player.anim.current_animation
 			})
 
 
@@ -165,7 +174,8 @@ func _process(_delta):
 
 			frame["team_vermelho"].append({
 				"position": pos,
-				"pivot_basis": rot
+				"pivot_basis": rot,
+				"animation": player.anim.current_animation
 			})
 
 		replay_frames.append(frame)
@@ -182,29 +192,19 @@ func _process(_delta):
 				var last_pos = team_azul_players[i].global_transform.origin
 				team_azul_players[i].global_transform.origin = frame["team_azul"][i]["position"] 
 
-				var vel = (frame["team_azul"][i]["position"] - last_pos).length()
-				if vel > 0.1:
-					if team_azul_players[i].anim.current_animation != "Robot_Running":
-						team_azul_players[i].anim.play("Robot_Running")
-				else:
-					if team_vermelho_players[i].anim.current_animation != "Robot_Idle":
-						team_azul_players[i].anim.play("Robot_Idle")
+				if frame["team_azul"][i]["animation"] != team_azul_players[i].anim.current_animation:
+					team_azul_players[i].anim.play(frame["team_azul"][i]["animation"])
+
 				team_azul_players[i].global_transform.origin = frame["team_azul"][i]["position"] 
 				team_azul_players[i].get_node("Pivot").global_transform.basis = frame["team_azul"][i]["pivot_basis"]
 				
 			for i in frame["team_vermelho"].size():
 				var last_pos = team_vermelho_players[i].global_transform.origin
 				team_vermelho_players[i].global_transform.origin = frame["team_vermelho"][i]["position"] 
-
-				var vel = abs((frame["team_vermelho"][i]["position"]  - last_pos).length())
-
-				if vel > 0.1:
-					if team_vermelho_players[i].anim.current_animation != "Robot_Running":
-						team_vermelho_players[i].anim.play("Robot_Running")
-				else:
-					if team_vermelho_players[i].anim.current_animation != "Robot_Idle":
-						team_vermelho_players[i].anim.play("Robot_Idle")
-
+				
+				if frame["team_vermelho"][i]["animation"] != team_vermelho_players[i].anim.current_animation:
+					team_vermelho_players[i].anim.play(frame["team_vermelho"][i]["animation"])
+					
 				team_vermelho_players[i].global_transform.origin = frame["team_vermelho"][i]["position"] 
 				team_vermelho_players[i].get_node("Pivot").global_transform.basis = frame["team_vermelho"][i]["pivot_basis"]
 
@@ -238,6 +238,8 @@ func _process(_delta):
 				team_vermelho_players[0].is_active = true
 			for player in all_players:
 				player.set_physics_process(true)
+			
+			is_gol = false
 	
 	if not is_replaying and not is_lateral:
 		if Input.is_joy_button_pressed(1, JOY_BUTTON_RIGHT_SHOULDER):
@@ -254,7 +256,7 @@ func _process(_delta):
 				if(Time.get_ticks_msec() / 1000.0 - last_switch_time_vermelho >= switch_delay):
 					team_vermelho_players[current_index_vermelho].is_active = false
 					if team_vermelho_players[current_index_vermelho].held_ball:
-						team_azul_players[current_index_azul].held_ball.holder = null
+						team_vermelho_players[current_index_vermelho].held_ball.holder = null
 						team_vermelho_players[current_index_vermelho].held_ball = null
 					last_switch_time_vermelho = Time.get_ticks_msec() / 1000.0
 					current_index_vermelho = (current_index_vermelho + 1) % team_vermelho_players.size()
@@ -293,19 +295,19 @@ func _on_lateral_body_entered(area: Area3D, body: Node3D) -> void:
 		body.holder.held_ball = null
 		body.holder = null
 
-	lateral_player.is_batedor = true
-	lateral_player.is_active = false
+
 	# fazer o lateral olhar para o centro di canmpo
 	lateral_player.anim.play("Robot_Idle")
 	lateral_player.get_node("Pivot").look_at(Vector3(0, 0, 0), Vector3.UP)
 	var other = lateral_player.get_nearest_teammate()
 
 	for player in players:
-		if player != lateral_player:
 			player.is_active = false
 			player.is_batedor = false
 			player.anim.play("Robot_Idle")
-
+			
+	lateral_player.is_batedor = true
+	
 	if other:
 		other.is_active = true
 		other.is_batedor = false

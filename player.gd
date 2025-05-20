@@ -10,6 +10,7 @@ extends CharacterBody3D
 @export var time := "Azul"
 @export var base_impulse_strenght := 20
 var is_rotating = false
+var is_passing = false
 
 var actual_impulse_strenght = base_impulse_strenght
 var deadzone = 0.2
@@ -87,11 +88,106 @@ func _physics_process(delta):
 		process_active(delta)
 	elif is_batedor:
 		process_batedor(delta)
+	elif !get_node("/root/Main").is_lateral and !is_rotating and !get_node("/root/Main").is_replaying:
+		process_inactive(delta)
+
 	process_common(delta)
+
+func process_inactive(delta):
+	if get_node("/root/Main").is_replaying or get_node("/root/Main").is_gol:
+		return
+	
+	var ball = null
+	if get_tree().has_group("Ball"):
+		var balls = get_tree().get_nodes_in_group("Ball")
+		if balls.size() > 0:
+			ball = balls[0]
+	
+	if ball == null:
+		target_velocity = Vector3.ZERO
+		return
+	
+	var ball_pos = ball.global_transform.origin
+	var my_pos = global_transform.origin
+	var dir_to_ball = (ball_pos - my_pos)
+	dir_to_ball.y = 0
+	
+	var dist_to_ball = dir_to_ball.length()
+	var keep_distance = 5 
+	var avoid_teammate_distance = 10
+	
+	var teammates = []
+	if time == "Azul":
+		teammates = get_tree().get_nodes_in_group("Time_Azul")
+	else:
+		teammates = get_tree().get_nodes_in_group("Time_Vermelho")
+	
+	var avoid_dir = Vector3.ZERO
+	var close_teammates_count = 0
+	for mate in teammates:
+		if mate == self:
+			continue
+		var to_mate = my_pos - mate.global_transform.origin
+		to_mate.y = 0
+		var dist_mate = to_mate.length()
+		if dist_mate < avoid_teammate_distance and dist_mate > 0:
+			avoid_dir += to_mate.normalized() * (avoid_teammate_distance - dist_mate)
+			close_teammates_count += 1
+	
+	var extra_avoidance = 0.0
+	if close_teammates_count > 0:
+		extra_avoidance = close_teammates_count * 0.5
+	
+
+	var target_pos = ball_pos - dir_to_ball.normalized() * (keep_distance + extra_avoidance)
+	
+	if dist_to_ball < keep_distance + extra_avoidance:
+		var right_dir = Vector3(dir_to_ball.z, 0, -dir_to_ball.x).normalized()
+		var side_pos = ball_pos + right_dir * (keep_distance + extra_avoidance)
+		if (side_pos - my_pos).length() > 0.5:
+			target_pos = side_pos
+		else:
+			target_pos = my_pos
+	
+	target_pos += avoid_dir
+	
+	# Garante que target_pos não fique dentro da bolha da bola
+	var to_ball_from_target = target_pos - ball_pos
+	to_ball_from_target.y = 0
+	if to_ball_from_target.length() < (keep_distance + extra_avoidance):
+		target_pos = ball_pos + to_ball_from_target.normalized() * (keep_distance + extra_avoidance)
+	
+	# Direção para onde ir
+	var move_dir = target_pos - my_pos
+	move_dir.y = 0
+	
+	if move_dir.length() > 0.1:
+		move_dir = move_dir.normalized()
+
+		var current_basis = $Pivot.basis
+		var target_basis = Basis.looking_at(move_dir, Vector3.UP)
+		$Pivot.basis = current_basis.slerp(target_basis, delta * 5)
+		
+		var speed_factor = 1.0
+		if dist_to_ball < 10.0:
+			speed_factor = 0.4
+		elif dist_to_ball < 20.0:
+			speed_factor = 0.7
+		
+		target_velocity.x = move_dir.x * base_speed * speed_factor
+		target_velocity.z = move_dir.z * base_speed * speed_factor
+	else:
+		target_velocity = Vector3.ZERO
+		if dist_to_ball > 0.1:
+			var current_basis = $Pivot.basis
+			var target_basis = Basis.looking_at(dir_to_ball.normalized(), Vector3.UP)
+			$Pivot.basis = current_basis.slerp(target_basis, delta * 5)
+
 
 func process_batedor(delta):
 	if get_node("/root/Main").is_replaying:
 		return
+
 	var direction = Vector3.ZERO
 	# nao pode andar, apenas rotacionar um angulo de min 20 ateh max 160 com o joystick right
 	# ou seja, so pode fazer uma meia lua
@@ -113,7 +209,8 @@ func process_batedor(delta):
 	if Input.is_joy_button_pressed(joystick_id, JOY_BUTTON_B):
 		var main = get_node("/root/Main")
 
-		if main.is_lateral:
+		if main.is_lateral and held_ball:
+			held_ball.freeze = false
 			held_ball.throw_ball(actual_impulse_strenght)
 			held_ball = null
 			main.is_lateral = false
@@ -127,7 +224,9 @@ func process_common(delta):
 	
 	velocity = target_velocity
 	move_and_slide()
-	
+
+
+
 func process_active(delta):
 	if get_node("/root/Main").is_replaying:
 		return
@@ -199,9 +298,10 @@ func process_active(delta):
 		held_ball.throw_ball(actual_impulse_strenght)
 		held_ball = null
 
-	if Input.is_joy_button_pressed(joystick_id, JOY_BUTTON_B) and held_ball:
+	if Input.is_joy_button_pressed(joystick_id, JOY_BUTTON_B) and held_ball and not get_node("/root/Main").is_lateral:
 		var teammate = get_nearest_teammate()
 		if teammate:
+			is_rotating = true
 			var ball = held_ball
 			var to_target = teammate.global_transform.origin - global_transform.origin
 			var distance = to_target.length()

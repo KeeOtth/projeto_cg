@@ -1,7 +1,7 @@
 [gd_scene load_steps=8 format=3 uid="uid://bts683nea0mdl"]
 
 [ext_resource type="Script" uid="uid://b4xb635dpyjib" path="res://player.gd" id="1_4flbx"]
-[ext_resource type="PackedScene" uid="uid://ba6oymox1q30b" path="res://models/Robot/Robot.glb" id="2_onrkg"]
+[ext_resource type="PackedScene" uid="uid://di4c10wu6m14b" path="res://models/Robot/Robot.glb" id="2_onrkg"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sh265"]
 albedo_color = Color(0.0328, 0.46576, 0.82, 1)
